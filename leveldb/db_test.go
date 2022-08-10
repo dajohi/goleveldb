@@ -8,7 +8,6 @@ package leveldb
 
 import (
 	"bytes"
-	"container/list"
 	crand "crypto/rand"
 	"encoding/binary"
 	"fmt"
@@ -1202,7 +1201,7 @@ func TestDB_Snapshot(t *testing.T) {
 }
 
 func TestDB_SnapshotList(t *testing.T) {
-	db := &DB{snapsList: list.New()}
+	db := &DB{}
 	e0a := db.acquireSnapshot()
 	e0b := db.acquireSnapshot()
 	db.seq = 1

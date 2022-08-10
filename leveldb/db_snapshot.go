@@ -7,7 +7,6 @@
 package leveldb
 
 import (
-	"container/list"
 	"fmt"
 	"runtime"
 	"sync"
@@ -21,7 +20,6 @@ import (
 type snapshotElement struct {
 	seq uint64
 	ref int
-	e   *list.Element
 }
 
 // Acquires a snapshot, based on latest sequence.
@@ -31,17 +29,18 @@ func (db *DB) acquireSnapshot() *snapshotElement {
 
 	seq := db.getSeq()
 
-	if e := db.snapsList.Back(); e != nil {
-		se := e.Value.(*snapshotElement)
-		if se.seq == seq {
-			se.ref++
-			return se
-		} else if seq < se.seq {
+	l := len(db.snapsList)
+	if l > 0 {
+		e := db.snapsList[l-1]
+		if e.seq == seq {
+			e.ref++
+			return e
+		} else if seq < e.seq {
 			panic("leveldb: sequence number is not increasing")
 		}
 	}
 	se := &snapshotElement{seq: seq, ref: 1}
-	se.e = db.snapsList.PushBack(se)
+	db.snapsList = append(db.snapsList, se)
 	return se
 }
 
@@ -52,8 +51,12 @@ func (db *DB) releaseSnapshot(se *snapshotElement) {
 
 	se.ref--
 	if se.ref == 0 {
-		db.snapsList.Remove(se.e)
-		se.e = nil
+		for i := 0; i < len(db.snapsList); i++ {
+			if db.snapsList[i] == se {
+				db.snapsList = append(db.snapsList[:i:i], db.snapsList[i+1:]...)
+				break
+			}
+		}
 	} else if se.ref < 0 {
 		panic("leveldb: Snapshot: negative element reference")
 	}
@@ -64,8 +67,8 @@ func (db *DB) minSeq() uint64 {
 	db.snapsMu.Lock()
 	defer db.snapsMu.Unlock()
 
-	if e := db.snapsList.Front(); e != nil {
-		return e.Value.(*snapshotElement).seq
+	if len(db.snapsList) > 0 {
+		return db.snapsList[0].seq
 	}
 
 	return db.getSeq()

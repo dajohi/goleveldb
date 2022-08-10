@@ -7,7 +7,6 @@
 package leveldb
 
 import (
-	"container/list"
 	"fmt"
 	"io"
 	"os"
@@ -60,7 +59,7 @@ type DB struct {
 
 	// Snapshot.
 	snapsMu   sync.Mutex
-	snapsList *list.List
+	snapsList []*snapshotElement
 
 	// Write.
 	batchPool    sync.Pool
@@ -100,8 +99,6 @@ func openDB(s *session) (*DB, error) {
 		seq: s.stSeqNum,
 		// MemDB
 		memPool: make(chan *memdb.DB, 1),
-		// Snapshot
-		snapsList: list.New(),
 		// Write
 		batchPool:    sync.Pool{New: newBatch},
 		writeMergeC:  make(chan writeMerge),
