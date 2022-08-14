@@ -5,7 +5,13 @@ linters-settings:
       - elseif
 
 linters:
+  disable-all: true
   enable:
-    - gofmt
     - gocritic
     - unconvert
+    - govet
+    - gosimple
+    - rowserrcheck
+    - ineffassign
+    - sqlclosecheck
+    - noctx

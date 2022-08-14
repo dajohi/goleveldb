@@ -19,6 +19,7 @@ jobs:
         uses: actions/checkout@v3
       - name: Install Linters
         run: "curl -sSfL https://raw.githubusercontent.com/golangci/golangci-lint/master/install.sh | sh -s -- -b $(go env GOPATH)/bin v1.48.0"
-
-      - name: Test
-        run: env GORACE=halt_on_error=1 go test -race ./... 
+      - name: Lint
+        run: golangci-lint run
+#      - name: Test
+#        run: env GORACE=halt_on_error=1 go test -race ./...
